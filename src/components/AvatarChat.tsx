@@ -48,10 +48,32 @@ export const AvatarChat = () => {
           console.error("An exception occurred:", error);
         },
         onUserPublished: async (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video' | 'datachannel') => {
+          console.log(`User published ${mediaType} track:`, user.uid);
+          
           if (mediaType === 'video') {
-            const remoteTrack = await agoraSDK.getClient().subscribe(user, mediaType);
-            remoteTrack?.play('avatar-video');
+            try {
+              const remoteTrack = await agoraSDK.getClient().subscribe(user, mediaType);
+              remoteTrack?.play('avatar-video');
+              console.log('Video track subscribed and playing');
+            } catch (error) {
+              console.error('Failed to subscribe to video track:', error);
+            }
+          } else if (mediaType === 'audio') {
+            try {
+              const remoteTrack = await agoraSDK.getClient().subscribe(user, mediaType);
+              if (remoteTrack) {
+                remoteTrack.play();
+                console.log('Audio track subscribed and playing');
+              } else {
+                console.error('Failed to get remote audio track');
+              }
+            } catch (error) {
+              console.error('Failed to subscribe to audio track:', error);
+            }
           }
+        },
+        onUserUnpublished: (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video' | 'datachannel') => {
+          console.log(`User unpublished ${mediaType} track:`, user.uid);
         }
       };
 
@@ -75,7 +97,7 @@ export const AvatarChat = () => {
 
 
       // In a real app, you would get these credentials from your backend
-      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NzA3YWE2MmExNTgxMzA2ZTUwMTBiZCIsInVpZCI6NTA1ODY3MywiZW1haWwiOiJjdmFsZW56dWVsYUBuYXR1cmFscGhvbmUuY2wiLCJjcmVkZW50aWFsSWQiOiI2ODgxNTRhMjkxMTAwMjJhMTMwZjVkNzAiLCJmaXJzdE5hbWUiOiJDYXJsb3MiLCJsYXN0TmFtZSI6IlZhbGVuenVlbGEiLCJ0ZWFtX2lkIjoiNjc3MDdhYTY1NjFmYzdmODBiMzhjZjkxIiwicm9sZV9hY3Rpb25zIjpbMSwyLDMsNCw1LDYsNyw4LDldLCJpc19kZWZhdWx0X3RlYW0iOnRydWUsImNoYW5uZWwiOjEwMDAwLCJmcm9tIjoidG9PIiwidHlwZSI6InVzZXIiLCJpYXQiOjE3NTQwNTc0MTksImV4cCI6MjA2NTA5NzQxOX0.VAvVdAoOcV_0Na7BLwcRW-Z9pRQdKX6p1Yf-oNuVCNM";
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NzA3YWE2MmExNTgxMzA2ZTUwMTBiZCIsInVpZCI6NTA1ODY3MywiZW1haWwiOiJjdmFsZW56dWVsYUBuYXR1cmFscGhvbmUuY2wiLCJjcmVkZW50aWFsSWQiOiI2ODgxNTRhMjkxMTAwMjJhMTMwZjVkNzAiLCJmaXJzdE5hbWUiOiJDYXJsb3MiLCJsYXN0TmFtZSI6IlZhbGVuenVlbGEiLCJ0ZWFtX2lkIjoiNjc3MDdhYTY1NjFmYzdmODBiMzhjZjkxIiwicm9sZV9hY3Rpb25zIjpbMSwyLDMsNCw1LDYsNyw4LDldLCJpc19kZWZhdWx0X3RlYW0iOnRydWUsImNoYW5uZWwiOjEwMDAwLCJmcm9tIjoidG9PIiwidHlwZSI6InVzZXIiLCJpYXQiOjE3NTQwNjQ4NDYsImV4cCI6MjA2NTEwNDg0Nn0.PJvX-GLd88vXX-rZpA8LWdE-7JYo8SIj_WJyxTZsPmM";
       const response = await fetch('https://openapi.akool.com/api/open/v4/liveAvatar/session/create', {
         method: 'POST',
         headers: {
@@ -154,9 +176,11 @@ export const AvatarChat = () => {
             variant="outlined"
             onClick={toggleMic}
             disabled={!isConnected}
+            sx={{ mr: 2 }}
           >
             {isMicEnabled ? 'Disable Mic' : 'Enable Mic'}
           </Button>
+
         </Box>
 
         <Box id="avatar-video" sx={{ width: '100%', height: 300, bgcolor: 'black', mb: 2 }} />
